@@ -180,10 +180,20 @@ els.newProject.addEventListener("click", () => {
 
 // ---------- Open project ----------
 async function openProject(slug) {
-  // Save current first if dirty
+  if (state.currentSlug === slug) return; // already open
+  // Flush any pending edits to disk before swapping.
   await flushSave();
+  // If the save failed (status still dirty), don't silently move on.
+  if (state.saveStatus === "dirty") {
+    const proceed = confirm(
+      "Your current project has unsaved changes that couldn't be written to disk. Switch anyway and discard them?"
+    );
+    if (!proceed) return;
+  }
   state.currentSlug = slug;
   state.current = await invoke("read_project", { root: state.root, slug });
+  state.saveStatus = "saved";
+  els.saveStatus.textContent = "—";
   enableProjectControls(true);
   renderProject();
   renderProjects(); // re-highlight
@@ -466,18 +476,35 @@ async function flushSave() {
   if (!state.current) return;
   if (state.saveStatus !== "dirty") return;
   clearTimeout(state.saveTimer);
+  // Snapshot what we're saving and which project it belongs to. If the user
+  // switches projects mid-save, we can detect that and skip the post-save
+  // bookkeeping so we don't write someone else's metadata onto the new project.
+  const savingSlug = state.current.slug;
+  const savingProject = state.current;
   state.saveStatus = "saving";
   els.saveStatus.textContent = "saving…";
   els.saveBtn.disabled = true;
   try {
     const updated = await invoke("save_project", {
       root: state.root,
-      project: state.current,
+      project: savingProject,
     });
-    state.current = updated;
-    state.saveStatus = "saved";
-    els.saveStatus.textContent = "saved " + updated.meta.updated;
-    els.saveBtn.disabled = true;
+    // CRITICAL: do NOT reassign state.current. The DOM handlers built by
+    // renderEntries/renderTodos closed over the current project object —
+    // replacing it would orphan those handlers and silently lose any edits
+    // typed while the save was in flight or made after this save returns.
+    // Mutate the existing object in place with just the fields the server
+    // may have changed (created + updated timestamps).
+    if (state.current && state.current.slug === savingSlug) {
+      state.current.meta.created = updated.meta.created;
+      state.current.meta.updated = updated.meta.updated;
+      // If no further edits arrived during the save, we're clean.
+      if (state.saveStatus === "saving") {
+        state.saveStatus = "saved";
+        els.saveStatus.textContent = "saved " + updated.meta.updated;
+        els.saveBtn.disabled = true;
+      }
+    }
     refreshProjects();
   } catch (e) {
     state.saveStatus = "dirty";
