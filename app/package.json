@@ -1,0 +1,14 @@
+{
+  "name": "data-diary",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lightweight data diary for tracking projects, sub-entries, todos, and artifacts. Saves to .Rmd files.",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.0"
+  }
+}

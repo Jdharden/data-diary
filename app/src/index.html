@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Data Diary</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- First-run splash -->
+    <section id="splash" class="splash hidden">
+      <div class="splash-card">
+        <h1>Data Diary</h1>
+        <p class="muted">
+          Pick a folder where your projects will live. Each project becomes a
+          folder with a <code>project.Rmd</code> and an <code>artifacts/</code>
+          subfolder — ready for R, Git, or anywhere else.
+        </p>
+        <button id="pick-root" class="primary">Choose folder…</button>
+        <p id="splash-current" class="muted small"></p>
+      </div>
+    </section>
+
+    <!-- Main app -->
+    <main id="app" class="app hidden">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <h2>Projects</h2>
+          <button id="new-project-btn" title="New project">+</button>
+        </header>
+        <div class="search-row">
+          <input id="search" type="text" placeholder="search…" />
+          <select id="sort">
+            <option value="updated">recent</option>
+            <option value="title">name</option>
+          </select>
+        </div>
+        <ul id="project-list" class="project-list"></ul>
+        <footer class="sidebar-footer">
+          <button id="change-root" title="Change folder" class="link-btn">
+            ↺ change folder
+          </button>
+          <span id="root-label" class="muted small"></span>
+        </footer>
+      </aside>
+
+      <!-- Editor -->
+      <section class="editor-wrap">
+        <header class="editor-header">
+          <input
+            id="project-title"
+            class="project-title"
+            type="text"
+            placeholder="(no project selected)"
+            disabled
+          />
+          <div class="editor-meta">
+            <span id="save-status" class="muted small">—</span>
+            <button id="save-btn" class="primary" disabled title="Save (⌘S)">save</button>
+            <button id="add-entry-btn" disabled>+ entry</button>
+            <button id="delete-project-btn" class="danger-btn" disabled>
+              delete
+            </button>
+          </div>
+        </header>
+        <div id="entries" class="entries"></div>
+        <div id="empty-state" class="empty-state">
+          <p class="muted">
+            Pick a project from the left, or click <strong>+</strong> to create
+            one.
+          </p>
+        </div>
+      </section>
+
+      <!-- Right margin: todos + artifacts -->
+      <aside class="margin">
+        <section class="margin-section">
+          <header class="margin-header">
+            <h3>To-do</h3>
+            <span id="todo-count" class="muted small"></span>
+          </header>
+          <ul id="todo-list" class="todo-list"></ul>
+          <form id="todo-form" class="todo-form">
+            <input
+              id="todo-input"
+              type="text"
+              placeholder="add task…"
+              disabled
+            />
+          </form>
+        </section>
+
+        <section class="margin-section">
+          <header class="margin-header">
+            <h3>Artifacts</h3>
+          </header>
+          <ul id="artifact-list" class="artifact-list"></ul>
+          <div class="artifact-actions">
+            <button id="add-file-btn" disabled>+ file</button>
+            <button id="add-link-btn" disabled>+ link</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <h3 id="modal-title">New project</h3>
+        <div id="modal-fields"></div>
+        <div class="modal-actions">
+          <button id="modal-cancel">cancel</button>
+          <button id="modal-ok" class="primary">ok</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>

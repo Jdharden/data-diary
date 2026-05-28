@@ -1,0 +1,30 @@
+[package]
+name = "data-diary"
+version = "0.1.0"
+description = "A lightweight data diary that saves to .Rmd files"
+authors = ["DataWhisperer"]
+edition = "2021"
+rust-version = "1.70"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.6", features = [ "fs-read-file", "fs-create-dir", "fs-exists", "fs-remove-dir", "fs-write-file", "fs-remove-file", "fs-read-dir", "dialog-open", "shell-open", "path-all"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1.0"
+dirs = "5.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

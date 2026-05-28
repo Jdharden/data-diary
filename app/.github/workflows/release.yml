@@ -1,0 +1,81 @@
+name: Release
+
+# Triggers when you push a tag like v0.1.0
+on:
+  push:
+    tags:
+      - "v*"
+  # Also lets you run it manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+          - platform: ubuntu-22.04
+            args: ""
+          - platform: windows-latest
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Build universal binaries on macOS (Apple Silicon + Intel)
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev
+
+      - name: Install npm deps
+        run: npm install
+
+      - name: Build & upload installers
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Data Diary ${{ github.ref_name }}"
+          releaseBody: |
+            ## Install
+
+            - **macOS** — download `Data.Diary_*_universal.dmg`, open it, drag the app to Applications. On first launch right-click → Open (the build isn't code-signed).
+            - **Windows** — download `Data.Diary_*_x64-setup.exe` or the `.msi` and run it.
+            - **Linux** — download the `.AppImage`, `chmod +x` it, and run.
+
+            Built from commit `${{ github.sha }}`.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
